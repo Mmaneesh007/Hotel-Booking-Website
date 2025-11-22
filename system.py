@@ -19,6 +19,8 @@ class HotelSystem:
         self._initialize_mock_data()
 
     def _create_db_and_tables(self):
+        # Clear existing metadata to avoid conflicts on Streamlit reload
+        SQLModel.metadata.clear()
         SQLModel.metadata.create_all(self.engine)
 
     def _initialize_mock_data(self):
