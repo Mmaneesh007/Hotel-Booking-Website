@@ -7,7 +7,11 @@ from models import Room, RoomType, RoomStatus, Guest, GuestType, Reservation, Re
 class HotelSystem:
     def __init__(self, db_url: Optional[str] = None):
         if db_url:
-            self.engine = create_engine(db_url)
+            # Supabase/Postgres usually requires SSL
+            connect_args = {}
+            if "postgresql" in db_url:
+                connect_args = {"sslmode": "require"}
+            self.engine = create_engine(db_url, connect_args=connect_args)
         else:
             self.engine = create_engine("sqlite:///hotel_inr.db")
         
