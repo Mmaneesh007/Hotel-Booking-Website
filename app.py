@@ -86,17 +86,30 @@ st.markdown("""
         border-radius: 15px;
         padding: 1rem;
         box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        color: #1E293B !important;
     }
     
-    /* Chat Input */
-    .stChatInputContainer input {
-        color: #1E293B !important;
+    .stChatMessage p, .stChatMessage div, .stChatMessage span {
+        color: #000000 !important;
     }
     
-    /* Fix text visibility in all inputs */
-    input, textarea, .stTextInput input, .stTextArea textarea {
-        color: #1E293B !important;
+    /* Chat Input - Black text on light input */
+    .stChatInput input {
+        color: #000000 !important;
+        background-color: #FFFFFF !important;
+    }
+    
+    /* All Text Inputs - Black text */
+    input, textarea {
+        color: #000000 !important;
+    }
+    
+    .stTextInput input, .stTextArea textarea {
+        color: #000000 !important;
+    }
+    
+    /* Placeholder text */
+    input::placeholder, textarea::placeholder {
+        color: #666666 !important;
     }
 </style>
 """, unsafe_allow_html=True)
