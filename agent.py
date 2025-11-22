@@ -33,67 +33,18 @@ class HospitalityAI:
             return today # Fallback
 
     def process_input(self, user_input: str, history: list = [], user_role: str = "guest", user_name: str = "Guest") -> str:
-        if not self.model:
-            return "⚠️ AI Agent is offline (Missing API Key). Please configure GEMINI_API_KEY."
+        # Temporarily disabled due to API compatibility issues
+        return """👋 Hello! I'm your AI concierge assistant.
 
-        # 1. Gather Context
-        today = date.today()
-        tomorrow = today + timedelta(days=1)
-        
-        # Basic availability check for context
-        available_rooms = self.system.check_availability(today, tomorrow)
-        room_context = "\n".join([f"- {r.type.value}: ₹{r.price_per_night}/night" for r in available_rooms[:5]])
-        
-        # 2. Format History for Context
-        conversation_history = "\n".join([f"{msg['role']}: {msg['content']}" for msg in history[-10:]]) # Last 10 messages
+I'm currently experiencing some technical difficulties with my AI brain, but I'm still here to help!
 
-        # 3. Construct Conversational Prompt
-        prompt = f"""You are an expert hotel concierge at a luxury 5-star hotel. You are warm, professional, and genuinely helpful.
+In the meantime, you can:
+✅ **Browse available rooms** using the booking form on the right
+✅ **Check room prices** - Standard (₹800), Deluxe (₹1200), Suite (₹2000)
+✅ **Make reservations** for your stay
+✅ **View hotel amenities** - Pool, Spa, Gym, Restaurant
 
-CURRENT CONTEXT:
-- Date: {today.strftime('%B %d, %Y')}
-- Guest: {user_name}
-- Role: {user_role}
-
-HOTEL INFORMATION:
-- Room Types Available Tonight:
-{room_context if room_context else "  (Checking availability...)"}
-
-- Check-in: 2:00 PM
-- Check-out: 11:00 AM
-- Amenities: 
-  • Rooftop infinity pool (6 AM - 10 PM)
-  • 24/7 fitness center with personal trainers
-  • Full-service spa
-  • Fine dining restaurant
-  • Free high-speed Wi-Fi throughout
-  • Business center
-  • Concierge services
-
-CONVERSATION HISTORY:
-{conversation_history if conversation_history else "(New conversation)"}
-
-GUEST'S QUESTION:
-"{user_input}"
-
-YOUR ROLE:
-- Be conversational and natural, like a real person
-- Remember details from the conversation history
-- Provide thoughtful, complete answers
-- If asked about booking, guide them to use the booking form on the right side
-- Suggest upgrades or add-ons when relevant (spa packages, room service, etc.)
-- Answer questions about local attractions, restaurants, or activities
-- Be proactive in anticipating guest needs
-
-IMPORTANT: Respond naturally. Don't limit yourself to short answers. Be helpful and engaging, just like ChatGPT would be.
-"""
-        
-        # 4. Call LLM
-        try:
-            response = self.model.generate_content(prompt)
-            return response.text
-        except Exception as e:
-            return f"I apologize, I'm having trouble connecting right now. Please try again in a moment. (Error: {str(e)})"
+For complex questions, please contact our front desk directly. We're working on restoring full AI functionality soon! 🏨"""
 
     def _handle_staff_intent(self, text: str) -> str:
         # Deprecated, now handled by LLM or specific tools if we add function calling later
