@@ -4,10 +4,12 @@ from system import HotelSystem
 from agent import HospitalityAI
 from models import RoomType, GuestType
 
+# --- CONFIGURATION & SETUP ---
+st.set_page_config(page_title="HOSPITALITY-AI", page_icon="🏨", layout="wide")
+
 # Initialize System
 @st.cache_resource
 def get_system():
-    # Try to get DB URL from secrets, else env, else None (local default)
     db_url = st.secrets.get("DATABASE_URL")
     return HotelSystem(db_url=db_url)
 
@@ -17,105 +19,186 @@ system = get_system()
 api_key = st.secrets.get("GEMINI_API_KEY")
 ai = HospitalityAI(system, api_key=api_key)
 
-st.set_page_config(page_title="HOSPITALITY-AI", page_icon="🏨", layout="wide")
+# Initialize Session State for Chat
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-st.title("🏨 HOSPITALITY-AI System")
+# --- CUSTOM CSS (PREMIUM UI) ---
+st.markdown("""
+<style>
+    /* Import Google Font */
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;600&display=swap');
 
-# Sidebar for Role Selection
-role = st.sidebar.selectbox("Select Role", ["Guest", "Staff", "Manager"])
+    /* Global Styles */
+    html, body, [class*="css"] {
+        font-family: 'Inter', sans-serif;
+    }
+    h1, h2, h3 {
+        font-family: 'Playfair Display', serif;
+        color: #1E293B;
+    }
+    
+    /* Hero Section */
+    .hero-container {
+        background: linear-gradient(135deg, #0F2027 0%, #203A43 50%, #2C5364 100%);
+        padding: 4rem 2rem;
+        border-radius: 15px;
+        color: white;
+        text-align: center;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    .hero-title {
+        font-size: 3.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        color: #F8F9FA;
+    }
+    .hero-subtitle {
+        font-size: 1.2rem;
+        font-weight: 300;
+        opacity: 0.9;
+    }
+
+    /* Buttons */
+    .stButton > button {
+        background-color: #C5A059; /* Gold */
+        color: white;
+        border-radius: 30px;
+        border: none;
+        padding: 0.5rem 2rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    .stButton > button:hover {
+        background-color: #B08D48;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(197, 160, 89, 0.4);
+    }
+
+    /* Chat Interface */
+    .stChatMessage {
+        background-color: #F8F9FA;
+        border-radius: 15px;
+        padding: 1rem;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# --- SIDEBAR ---
+with st.sidebar:
+    st.image("https://cdn-icons-png.flaticon.com/512/201/201623.png", width=80)
+    st.title("HOSPITALITY-AI")
+    st.markdown("---")
+    role = st.selectbox("Select Role", ["Guest", "Staff", "Manager"])
+    st.markdown("---")
+    if role == "Guest":
+        guest_name = st.text_input("Your Name", "John Doe")
+        if st.button("Login / Register"):
+            guest = system.create_guest(guest_name)
+            st.success(f"Welcome, {guest.name}!")
+
+# --- MAIN CONTENT ---
 
 if role == "Guest":
-    st.header("Welcome, Guest!")
-    
-    # Guest Identity
-    guest_name = st.sidebar.text_input("Your Name", "John Doe")
-    if st.sidebar.button("Login/Register"):
-        guest = system.create_guest(guest_name)
-        st.sidebar.success(f"Welcome back, {guest.name}!")
+    # Hero Section
+    st.markdown("""
+    <div class="hero-container">
+        <div class="hero-title">Welcome to Luxury</div>
+        <div class="hero-subtitle">Experience comfort, elegance, and AI-powered hospitality.</div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    # Chat Interface
-    st.subheader("Concierge Chat")
-    user_input = st.text_input("Ask me anything (e.g., 'I need a room for tomorrow')")
-    if user_input:
-        response = ai.process_input(user_input, user_role="guest", user_name=guest_name)
-        st.info(response)
+    col1, col2 = st.columns([1, 1.5], gap="large")
 
-    st.markdown("---")
-    
-    # Direct Booking Form
-    st.subheader("Book a Room")
-    col1, col2 = st.columns(2)
     with col1:
-        check_in = st.date_input("Check-in Date", date.today() + timedelta(days=1))
-    with col2:
-        check_out = st.date_input("Check-out Date", date.today() + timedelta(days=2))
-    
-    room_type = st.selectbox("Room Type", [t.value for t in RoomType])
-    
-    if st.button("Check Availability"):
-        available = system.check_availability(check_in, check_out, RoomType(room_type))
-        if available:
-            st.success(f"Found {len(available)} available {room_type} rooms!")
-            for room in available:
-                with st.expander(f"Room {room.number} - ₹{room.price_per_night}/night"):
-                    # Image Gallery
-                    img_col1, img_col2, img_col3 = st.columns(3)
-                    
-                    # Determine image prefix based on room type
-                    img_prefix = "standard"
-                    if room.type == RoomType.DELUXE:
-                        img_prefix = "deluxe"
-                    elif room.type == RoomType.SUITE:
-                        img_prefix = "suite"
-                        
-                    with img_col1:
-                        st.image(f"images/{img_prefix}_bedroom.png", caption="Bedroom", use_container_width=True)
-                    with img_col2:
-                        st.image(f"images/{img_prefix}_washroom.png", caption="Washroom", use_container_width=True)
-                    with img_col3:
-                        st.image(f"images/{img_prefix}_amenities.png", caption="Amenities", use_container_width=True)
+        st.subheader("💬 AI Concierge")
+        st.caption("Ask about rooms, amenities, or local tips.")
+        
+        # Display Chat History
+        for msg in st.session_state.messages:
+            with st.chat_message(msg["role"]):
+                st.write(msg["content"])
 
-                    st.write(f"Features: {room.features}")
-                    if st.button(f"Book Room {room.number}", key=room.id):
-                        # Need guest ID
-                        guest = system.create_guest(guest_name)
-                        res = system.create_reservation(guest.id, room.id, check_in, check_out)
-                        st.success(f"Reservation Confirmed! ID: {res.id}")
-        else:
-            st.error("No rooms available for these dates.")
+        # Chat Input
+        if prompt := st.chat_input("How can I help you today?"):
+            # Add user message to history
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            with st.chat_message("user"):
+                st.write(prompt)
+
+            # Get AI Response
+            with st.chat_message("assistant"):
+                with st.spinner("Thinking..."):
+                    response = ai.process_input(prompt, history=st.session_state.messages, user_name=guest_name)
+                    st.write(response)
+            
+            # Add AI response to history
+            st.session_state.messages.append({"role": "assistant", "content": response})
+
+    with col2:
+        st.subheader("📅 Book Your Stay")
+        with st.container(border=True):
+            c1, c2 = st.columns(2)
+            check_in = c1.date_input("Check-in", date.today() + timedelta(days=1))
+            check_out = c2.date_input("Check-out", date.today() + timedelta(days=2))
+            room_type = st.selectbox("Room Type", [t.value for t in RoomType])
+            
+            if st.button("Check Availability", use_container_width=True):
+                available = system.check_availability(check_in, check_out, RoomType(room_type))
+                if available:
+                    st.success(f"✨ Found {len(available)} {room_type} rooms!")
+                    for room in available:
+                        with st.expander(f"Room {room.number} - ₹{room.price_per_night}/night"):
+                            # Image Gallery
+                            img_prefix = room.type.value.lower()
+                            ic1, ic2, ic3 = st.columns(3)
+                            ic1.image(f"images/{img_prefix}_bedroom.png", caption="Bedroom")
+                            ic2.image(f"images/{img_prefix}_washroom.png", caption="Washroom")
+                            ic3.image(f"images/{img_prefix}_amenities.png", caption="Amenities")
+                            
+                            if st.button(f"Book Room {room.number}", key=room.id):
+                                guest = system.create_guest(guest_name)
+                                res = system.create_reservation(guest.id, room.id, check_in, check_out)
+                                st.balloons()
+                                st.success(f"Reservation Confirmed! ID: {res.id}")
+                else:
+                    st.error("No rooms available for these dates.")
 
 elif role == "Staff":
-    st.header("Staff Operations Dashboard")
-    
-    # Stats
-    occ, total = system.get_room_stats()
-    st.metric("Occupancy", f"{occ}/{total}", f"{int(occ/total*100) if total else 0}%")
-    
-    # Chat for Ops
-    st.subheader("Operational Query")
-    ops_input = st.text_input("Command (e.g., 'checkouts today')")
-    if ops_input:
-        response = ai.process_input(ops_input, user_role="staff")
-        st.warning(response)
-        
-    # Reservations List
-    st.subheader("All Reservations")
-    reservations = system.get_all_reservations()
-    if reservations:
-        data = []
-        for r in reservations:
-            data.append({
-                "ID": r.id[:8],
-                "Guest ID": r.guest_id[:8],
-                "Room": r.room_id[:8], # In real app, would join to get number
-                "Check-in": r.check_in,
-                "Check-out": r.check_out,
-                "Status": r.status
-            })
-        st.dataframe(data)
-    else:
-        st.info("No reservations found.")
+    st.header("🛡️ Staff Operations")
+    st.info("Staff module is currently under maintenance for the upgrade.")
 
 elif role == "Manager":
-    st.header("Manager Overview")
-    st.write("Analytics and Reporting modules coming soon.")
+    st.header("📊 Manager Dashboard")
+    
+    # Metrics
+    occ, total = system.get_room_stats()
+    revenue = 125000 # Mocked for demo, or calculate from DB
+    
+    m1, m2, m3 = st.columns(3)
+    m1.metric("Occupancy Rate", f"{int(occ/total*100)}%", f"{occ}/{total} Rooms")
+    m2.metric("Total Revenue", f"₹{revenue:,}", "+12%")
+    m3.metric("Check-ins Today", "8", "+2")
+    
+    st.markdown("### Occupancy Trends")
+    # Mock Data for Chart
+    chart_data = {
+        "Date": [date.today() - timedelta(days=i) for i in range(6, -1, -1)],
+        "Occupancy": [45, 50, 65, 70, 85, 90, 88]
+    }
+    st.line_chart(chart_data, x="Date", y="Occupancy", color="#C5A059")
+    
+    st.markdown("### Recent Reservations")
+    reservations = system.get_all_reservations()
+    if reservations:
+        data = [{
+            "ID": r.id[:8],
+            "Guest": r.guest_id[:8],
+            "Room": r.room_id[:8],
+            "Check-in": r.check_in,
+            "Status": r.status
+        } for r in reservations]
+        st.dataframe(data, use_container_width=True)
+

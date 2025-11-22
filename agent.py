@@ -27,7 +27,7 @@ class HospitalityAI:
         except ValueError:
             return today # Fallback
 
-    def process_input(self, user_input: str, user_role: str = "guest", user_name: str = "Guest") -> str:
+    def process_input(self, user_input: str, history: list = [], user_role: str = "guest", user_name: str = "Guest") -> str:
         if not self.model:
             return "⚠️ AI Agent is offline (Missing API Key). Please configure GEMINI_API_KEY."
 
@@ -39,7 +39,10 @@ class HospitalityAI:
         available_rooms = self.system.check_availability(today, tomorrow)
         room_context = "\n".join([f"- {r.type.value} Room: ₹{r.price_per_night}" for r in available_rooms[:5]])
         
-        # 2. Construct Prompt
+        # 2. Format History for Context
+        conversation_history = "\n".join([f"{msg['role']}: {msg['content']}" for msg in history[-5:]]) # Last 5 messages
+
+        # 3. Construct Prompt
         prompt = f"""
         You are the concierge at a luxury hotel.
         Current Date: {today}
@@ -53,16 +56,19 @@ class HospitalityAI:
         - Amenities: Pool, Gym, Spa, Free Wi-Fi
         - Prices are in INR (₹).
         
+        Recent Conversation:
+        {conversation_history}
+        
         User Query: "{user_input}"
         
         Instructions:
         - Be polite, professional, and helpful.
+        - Use the conversation history to understand context (e.g., if they said their name before).
         - If the user asks to book, guide them to use the booking form on the right.
         - Keep responses concise (max 3 sentences).
-        - If you don't know, say so politely.
         """
         
-        # 3. Call LLM
+        # 4. Call LLM
         try:
             response = self.model.generate_content(prompt)
             return response.text
