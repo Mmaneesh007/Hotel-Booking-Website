@@ -86,6 +86,17 @@ st.markdown("""
         border-radius: 15px;
         padding: 1rem;
         box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        color: #1E293B !important;
+    }
+    
+    /* Chat Input */
+    .stChatInputContainer input {
+        color: #1E293B !important;
+    }
+    
+    /* Fix text visibility in all inputs */
+    input, textarea, .stTextInput input, .stTextArea textarea {
+        color: #1E293B !important;
     }
 </style>
 """, unsafe_allow_html=True)
