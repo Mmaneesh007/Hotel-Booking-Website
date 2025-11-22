@@ -12,8 +12,8 @@ class HospitalityAI:
         if self.api_key:
             try:
                 genai.configure(api_key=self.api_key)
-                # Try gemini-pro first (most compatible)
-                self.model = genai.GenerativeModel('gemini-pro')
+                # Use gemini-1.5-flash (works with free Google AI Studio keys)
+                self.model = genai.GenerativeModel('gemini-1.5-flash')
             except Exception as e:
                 print(f"AI Model initialization error: {e}")
                 self.model = None
