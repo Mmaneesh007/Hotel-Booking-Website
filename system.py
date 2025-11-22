@@ -19,8 +19,12 @@ class HotelSystem:
         self._initialize_mock_data()
 
     def _create_db_and_tables(self):
-        # Clear existing metadata to avoid conflicts on Streamlit reload
-        SQLModel.metadata.clear()
+        # Clear existing metadata and dispose mappers to avoid conflicts on Streamlit reload
+        try:
+            from sqlalchemy.orm import clear_mappers
+            clear_mappers()
+        except:
+            pass
         SQLModel.metadata.create_all(self.engine)
 
     def _initialize_mock_data(self):
