@@ -21,6 +21,7 @@ class GuestType(str, Enum):
     LOYALTY = "Loyalty"
 
 class Guest(SQLModel, table=True):
+    __table_args__ = {"extend_existing": True}
     id: Optional[str] = Field(default=None, primary_key=True)
     name: str
     email: Optional[str] = None
@@ -31,6 +32,7 @@ class Guest(SQLModel, table=True):
     reservations: List["Reservation"] = Relationship(back_populates="guest")
 
 class Room(SQLModel, table=True):
+    __table_args__ = {"extend_existing": True}
     id: Optional[str] = Field(default=None, primary_key=True)
     number: str
     type: RoomType
@@ -47,6 +49,7 @@ class ReservationStatus(str, Enum):
     CANCELLED = "Cancelled"
 
 class Reservation(SQLModel, table=True):
+    __table_args__ = {"extend_existing": True}
     id: Optional[str] = Field(default=None, primary_key=True)
     guest_id: str = Field(foreign_key="guest.id")
     room_id: str = Field(foreign_key="room.id")
