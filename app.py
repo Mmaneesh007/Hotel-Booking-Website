@@ -7,10 +7,15 @@ from models import RoomType, GuestType
 # Initialize System
 @st.cache_resource
 def get_system():
-    return HotelSystem()
+    # Try to get DB URL from secrets, else env, else None (local default)
+    db_url = st.secrets.get("DATABASE_URL")
+    return HotelSystem(db_url=db_url)
 
 system = get_system()
-ai = HospitalityAI(system)
+
+# Initialize AI
+api_key = st.secrets.get("GEMINI_API_KEY")
+ai = HospitalityAI(system, api_key=api_key)
 
 st.set_page_config(page_title="HOSPITALITY-AI", page_icon="🏨", layout="wide")
 

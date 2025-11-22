@@ -35,5 +35,18 @@ First, you need to put this code into a GitHub repository.
 Once deployed, Streamlit will give you a public URL (e.g., `https://hospitality-ai.streamlit.app`) that you can share with anyone!
 
 ## Notes
-- **Database**: The app uses a local SQLite database (`hotel_inr.db`). On Streamlit Cloud, this database will be recreated each time the app restarts (which is fine for a demo).
 - **Images**: The `images/` folder is included in the repo, so your room previews will work automatically.
+
+## Secrets Configuration (Crucial for AI & Cloud DB)
+To make the AI and Cloud Database work on Streamlit Cloud, you must configure your secrets.
+
+1.  Go to your app dashboard on [share.streamlit.io](https://share.streamlit.io).
+2.  Click the three dots (⋮) next to your app -> **Settings**.
+3.  Go to **Secrets**.
+4.  Paste the following (replace with your actual keys):
+
+```toml
+GEMINI_API_KEY = "AIzaSy..."
+DATABASE_URL = "postgresql://postgres:[YOUR-PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres"
+```
+> **Note:** If you don't set `DATABASE_URL`, the app will fallback to the local SQLite database (which resets on restart).

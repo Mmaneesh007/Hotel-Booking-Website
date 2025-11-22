@@ -5,8 +5,12 @@ from sqlmodel import Session, SQLModel, create_engine, select
 from models import Room, RoomType, RoomStatus, Guest, GuestType, Reservation, ReservationStatus
 
 class HotelSystem:
-    def __init__(self, db_path: str = "hotel_inr.db"):
-        self.engine = create_engine(f"sqlite:///{db_path}")
+    def __init__(self, db_url: Optional[str] = None):
+        if db_url:
+            self.engine = create_engine(db_url)
+        else:
+            self.engine = create_engine("sqlite:///hotel_inr.db")
+        
         self._create_db_and_tables()
         self._initialize_mock_data()
 

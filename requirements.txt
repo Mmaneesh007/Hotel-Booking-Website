@@ -2,3 +2,5 @@ pydantic
 rich
 streamlit
 sqlmodel
+psycopg2-binary
+google-generativeai
