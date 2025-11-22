@@ -11,7 +11,11 @@ st.set_page_config(page_title="HOSPITALITY-AI", page_icon="🏨", layout="wide")
 @st.cache_resource
 def get_system():
     db_url = st.secrets.get("DATABASE_URL")
-    return HotelSystem(db_url=db_url)
+    try:
+        return HotelSystem(db_url=db_url)
+    except Exception as e:
+        st.error(f"🚨 Database Connection Error: {e}")
+        st.stop()
 
 system = get_system()
 
