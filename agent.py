@@ -11,7 +11,8 @@ class HospitalityAI:
         self.api_key = api_key
         if self.api_key:
             genai.configure(api_key=self.api_key)
-            self.model = genai.GenerativeModel('gemini-1.5-flash')
+            # Use gemini-1.5-pro which is available on the current API
+            self.model = genai.GenerativeModel('gemini-1.5-pro')
         else:
             self.model = None
 

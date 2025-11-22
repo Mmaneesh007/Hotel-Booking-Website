@@ -174,7 +174,9 @@ if role == "Guest":
             room_type = st.selectbox("Room Type", [t.value for t in RoomType])
             
             if st.button("Check Availability", use_container_width=True):
-                available = system.check_availability(check_in, check_out, RoomType(room_type))
+                # Convert the string value back to enum
+                selected_room_type = next(t for t in RoomType if t.value == room_type)
+                available = system.check_availability(check_in, check_out, selected_room_type)
                 if available:
                     st.success(f"✨ Found {len(available)} {room_type} rooms!")
                     for room in available:

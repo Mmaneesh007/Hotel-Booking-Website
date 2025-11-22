@@ -47,6 +47,7 @@ To make the AI and Cloud Database work on Streamlit Cloud, you must configure yo
 
 ```toml
 GEMINI_API_KEY = "AIzaSy..."
-DATABASE_URL = "postgresql://postgres:[YOUR-PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres"
+# Use the "Transaction Pooler" URL (Port 6543) to avoid IPv6 errors on Streamlit Cloud
+DATABASE_URL = "postgresql://postgres.[PROJECT-REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres"
 ```
-> **Note:** If you don't set `DATABASE_URL`, the app will fallback to the local SQLite database (which resets on restart).
+> **Note:** Go to Supabase -> Project Settings -> Database -> Connection String -> Change "Mode" to **Transaction** to get the correct URL.
