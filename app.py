@@ -208,7 +208,8 @@ elif role == "Manager":
     revenue = 125000 # Mocked for demo, or calculate from DB
     
     m1, m2, m3 = st.columns(3)
-    m1.metric("Occupancy Rate", f"{int(occ/total*100)}%", f"{occ}/{total} Rooms")
+    occupancy_rate = int(occ/total*100) if total > 0 else 0
+    m1.metric("Occupancy Rate", f"{occupancy_rate}%", f"{occ}/{total} Rooms")
     m2.metric("Total Revenue", f"₹{revenue:,}", "+12%")
     m3.metric("Check-ins Today", "8", "+2")
     

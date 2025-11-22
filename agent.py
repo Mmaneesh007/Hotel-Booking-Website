@@ -1,6 +1,6 @@
 import os
 import google.generativeai as genai
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from typing import Optional
 from system import HotelSystem
 from models import RoomType
