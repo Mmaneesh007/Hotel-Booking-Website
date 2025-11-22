@@ -2,5 +2,6 @@ pydantic
 rich
 streamlit
 sqlmodel
+sqlalchemy
 psycopg2-binary
-google-generativeai
+google-generativeai>=0.3.0
