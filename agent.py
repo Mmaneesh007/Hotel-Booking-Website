@@ -10,9 +10,13 @@ class HospitalityAI:
         self.system = system
         self.api_key = api_key
         if self.api_key:
-            genai.configure(api_key=self.api_key)
-            # Use gemini-1.5-pro which is available on the current API
-            self.model = genai.GenerativeModel('gemini-1.5-pro')
+            try:
+                genai.configure(api_key=self.api_key)
+                # Try gemini-pro first (most compatible)
+                self.model = genai.GenerativeModel('gemini-pro')
+            except Exception as e:
+                print(f"AI Model initialization error: {e}")
+                self.model = None
         else:
             self.model = None
 
