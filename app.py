@@ -123,6 +123,9 @@ with st.sidebar:
     # Check if user is logged in
     from auth import AuthManager
     
+    # Auto-login from cookies if available
+    AuthManager.auto_login()
+    
     if AuthManager.is_logged_in():
         # Show logged-in user info
         user_data = AuthManager.get_current_user()

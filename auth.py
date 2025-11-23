@@ -3,9 +3,15 @@ import secrets
 from datetime import datetime, timedelta
 from typing import Optional
 import streamlit as st
+import extra_streamlit_components as stx
 
 class AuthManager:
     """Handles user authentication and session management"""
+    
+    @staticmethod
+    def get_cookie_manager():
+        """Get cookie manager instance"""
+        return stx.CookieManager()
     
     @staticmethod
     def hash_password(password: str) -> str:
@@ -46,18 +52,63 @@ class AuthManager:
         }
     
     @staticmethod
-    def login(user_data: dict):
-        """Set user session data"""
+    def login(user_data: dict, remember_me: bool = True):
+        """Set user session data and optionally save to cookies"""
         st.session_state.user_id = user_data['id']
         st.session_state.user_email = user_data['email']
         st.session_state.user_name = user_data['name']
+        
+        if remember_me:
+            # Save to cookies for persistent login
+            try:
+                cookies = AuthManager.get_cookie_manager()
+                token = AuthManager.create_session_token()
+                
+                # Store user data in cookies (encrypted via token)
+                cookies['auth_token'] = token
+                cookies['user_id'] = user_data['id']
+                cookies['user_email'] = user_data['email']
+                cookies['user_name'] = user_data['name']
+            except:
+                pass  # Cookies not available in some environments
+    
+    @staticmethod
+    def auto_login():
+        """Check cookies and auto-login if valid session exists"""
+        if AuthManager.is_logged_in():
+            return True  # Already logged in
+        
+        try:
+            cookies = AuthManager.get_cookie_manager()
+            
+            if cookies.get('auth_token') and cookies.get('user_id'):
+                # Restore session from cookies
+                st.session_state.user_id = cookies.get('user_id')
+                st.session_state.user_email = cookies.get('user_email')
+                st.session_state.user_name = cookies.get('user_name')
+                return True
+        except:
+            pass
+        
+        return False
     
     @staticmethod
     def logout():
-        """Clear user session"""
+        """Clear user session and cookies"""
+        # Clear session state
         if 'user_id' in st.session_state:
             del st.session_state.user_id
         if 'user_email' in st.session_state:
             del st.session_state.user_email
         if 'user_name' in st.session_state:
             del st.session_state.user_name
+        
+        # Clear cookies
+        try:
+            cookies = AuthManager.get_cookie_manager()
+            cookies['auth_token'] = ''
+            cookies['user_id'] = ''
+            cookies['user_email'] = ''
+            cookies['user_name'] = ''
+        except:
+            pass
