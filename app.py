@@ -1,22 +1,3 @@
-@st.cache_resource(ttl=3600)  # Refresh cache every hour
-def get_system():
-    db_url = st.secrets.get("DATABASE_URL")
-    try:
-        return HotelSystem(db_url=db_url)
-    except Exception as e:
-        st.error(f"🚨 Database Connection Error: {e}")
-        st.stop()
-
-system = get_system()
-
-# Initialize AI
-api_key = st.secrets.get("GEMINI_API_KEY")
-ai = HospitalityAI(system, api_key=api_key)
-
-# Initialize Session State for Chat
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
 # --- CUSTOM CSS (PREMIUM UI) ---
 st.markdown("""
 <style>
