@@ -2,7 +2,7 @@ import streamlit as st
 import uuid
 from datetime import date, timedelta
 from system import HotelSystem
-from agent import HospitalityAIAgent
+from agent import HospitalityAI
 from models import RoomType, Guest
 from sqlmodel import select
 
@@ -23,7 +23,7 @@ system = get_system()
 
 # Initialize AI
 api_key = st.secrets.get("GEMINI_API_KEY")
-ai = HospitalityAIAgent(system, api_key=api_key)
+ai = HospitalityAI(system, api_key=api_key)
 
 # Initialize Session State for Chat
 if "messages" not in st.session_state:
