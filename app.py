@@ -231,12 +231,17 @@ with st.sidebar:
                                     # Store user ID for OTP verification
                                     st.session_state.pending_user_id = user.id
                                     st.session_state.pending_email = email
-                                    st.success("📧 Account created! Check your email for the OTP code.")
+                                    
+                                    # Check if this was a resend (user already existed)
+                                    if user.email_verified == False and user.verification_otp:
+                                        st.info("📧 OTP resent! Check your email.")
+                                    else:
+                                        st.success("📧 Account created! Check your email for the OTP code.")
                                     st.rerun()
                                 else:
-                                    st.error("Account created but failed to send OTP. Please contact support.")
+                                    st.error("Failed to send OTP. Please check email configuration or contact support.")
                             else:
-                                st.error("Email already registered")
+                                st.error("Email already registered and verified. Please login instead.")
         
         # Prevent access to main content if not logged in
         role = None

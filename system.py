@@ -142,7 +142,10 @@ class HotelSystem:
             # Check if email already exists
             existing = session.exec(select(User).where(User.email == email)).first()
             if existing:
-                return None  # Email already registered
+                # If email exists but is not verified, allow resending OTP
+                if not existing.email_verified:
+                    return existing  # Return existing user to trigger OTP resend
+                return None  # Email already registered and verified
             
             # Create new user
             user_id = str(uuid.uuid4())
