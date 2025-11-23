@@ -25,8 +25,14 @@ class EmailService:
             sender_password = st.secrets.get("email", {}).get("sender_password")
             
             if not sender_email or not sender_password:
-                print("Email credentials not configured in Streamlit secrets")
+                print("❌ Email credentials not configured in Streamlit secrets")
+                print(f"sender_email: {sender_email}")
+                print(f"sender_password exists: {bool(sender_password)}")
                 return False
+            
+            print(f"📧 Attempting to send email to {recipient_email}")
+            print(f"Using SMTP: {smtp_server}:{smtp_port}")
+            print(f"From: {sender_email}")
             
             # Create email message
             message = MIMEMultipart("alternative")
@@ -62,15 +68,27 @@ class EmailService:
             message.attach(html_part)
             
             # Send email
+            print(f"🔐 Connecting to SMTP server...")
             with smtplib.SMTP(smtp_server, smtp_port) as server:
+                print(f"🔒 Starting TLS...")
                 server.starttls()  # Secure connection
+                print(f"👤 Logging in as {sender_email}...")
                 server.login(sender_email, sender_password)
+                print(f"📤 Sending email...")
                 server.send_message(message)
             
+            print(f"✅ Email sent successfully to {recipient_email}")
             return True
             
+        except smtplib.SMTPAuthenticationError as e:
+            print(f"❌ SMTP Authentication Error: {e}")
+            print("Check: 1) App Password is correct 2) 2FA is enabled 3) No spaces in password")
+            return False
+        except smtplib.SMTPException as e:
+            print(f"❌ SMTP Error: {e}")
+            return False
         except Exception as e:
-            print(f"Error sending email: {e}")
+            print(f"❌ Unexpected error sending email: {e}")
             return False
     
     @staticmethod
