@@ -254,37 +254,64 @@ if role == "Guest":
                 available = system.check_availability(check_in, check_out, selected_room_type)
                 if available:
                     st.success(f"✨ Found {len(available)} {room_type} rooms!")
-                    for room in available:
-                        with st.expander(f"Room {room.number} - ₹{room.price_per_night}/night"):
-                            # Image Gallery
-                            img_prefix = room.type.value.lower()
-                            ic1, ic2, ic3 = st.columns(3)
-                            ic1.image(f"images/{img_prefix}_bedroom.png", caption="Bedroom")
-                            ic2.image(f"images/{img_prefix}_washroom.png", caption="Washroom")
-                            ic3.image(f"images/{img_prefix}_amenities.png", caption="Amenities")
-                            
-                            if st.button(f"Book Room {room.number}", key=room.id):
-                                # Get current user
-                                user_data = AuthManager.get_current_user()
-                                
-                                # Create or get guest linked to this user
-                                guest = system.find_guest_by_name(user_data['name'])
-                                if not guest:
-                                    guest = system.create_guest(user_data['name'])
-                                
-                                # Link guest to user if not already linked
-                                if guest.user_id != user_data['id']:
-                                    from sqlmodel import Session
-                                    with Session(system.engine) as session:
-                                        db_guest = session.get(Guest, guest.id)
-                                        db_guest.user_id = user_data['id']
-                                        session.commit()
-                                
-                                res = system.create_reservation(guest.id, room.id, check_in, check_out)
-                                st.balloons()
-                                st.success(f"✅ Reservation Confirmed! ID: {res.id[:8]}...")
+                    
+                    # Store available rooms in session state for booking
+                    st.session_state.available_rooms = available
+                    st.session_state.booking_check_in = check_in
+                    st.session_state.booking_check_out = check_out
                 else:
                     st.error("No rooms available for these dates.")
+            
+            # Show available rooms if they exist in session
+            if 'available_rooms' in st.session_state and st.session_state.available_rooms:
+                st.markdown("---")
+                st.markdown("### 🏨 Available Rooms")
+                
+                for room in st.session_state.available_rooms:
+                    with st.container(border=True):
+                        # Room header
+                        col_a, col_b = st.columns([3, 1])
+                        col_a.markdown(f"**🛏️ Room {room.number}**")
+                        col_b.markdown(f"**₹{room.price_per_night}/night**")
+                        
+                        # Image Gallery
+                        img_prefix = room.type.value.lower()
+                        ic1, ic2, ic3 = st.columns(3)
+                        ic1.image(f"images/{img_prefix}_bedroom.png", caption="Bedroom", use_column_width=True)
+                        ic2.image(f"images/{img_prefix}_washroom.png", caption="Washroom", use_column_width=True)
+                        ic3.image(f"images/{img_prefix}_amenities.png", caption="Amenities", use_column_width=True)
+                        
+                        # Booking button
+                        if st.button(f"📅 Book Room {room.number}", key=f"book_{room.id}", use_container_width=True, type="primary"):
+                            # Get current user
+                            user_data = AuthManager.get_current_user()
+                            
+                            # Create or get guest linked to this user
+                            guest = system.find_guest_by_name(user_data['name'])
+                            if not guest:
+                                guest = system.create_guest(user_data['name'])
+                            
+                            # Link guest to user if not already linked
+                            if guest.user_id != user_data['id']:
+                                from sqlmodel import Session
+                                with Session(system.engine) as session:
+                                    db_guest = session.get(Guest, guest.id)
+                                    db_guest.user_id = user_data['id']
+                                    session.commit()
+                            
+                            res = system.create_reservation(
+                                guest.id, 
+                                room.id, 
+                                st.session_state.booking_check_in, 
+                                st.session_state.booking_check_out
+                            )
+                            st.balloons()
+                            st.success(f"✅ Reservation Confirmed! ID: {res.id[:8]}...")
+                            st.info(f"**Room:** {room.number} | **Dates:** {st.session_state.booking_check_in} to {st.session_state.booking_check_out}")
+                            
+                            # Clear available rooms after booking
+                            del st.session_state.available_rooms
+                            st.rerun()
 
 elif role == "Staff":
     st.header("🛡️ Staff Operations")
