@@ -165,6 +165,10 @@ class HotelSystem:
             if not user:
                 return None
             
+            # Check if email is verified
+            if not user.email_verified:
+                raise ValueError("Please verify your email first. Check your inbox for the OTP code.")
+            
             if AuthManager.verify_password(password, user.password_hash):
                 return user
             return None
@@ -188,3 +192,50 @@ class HotelSystem:
                 ).all()
                 return reservations
             return []
+    
+    def send_verification_otp(self, user_id: str) -> bool:
+        """Generate and send OTP to user's email"""
+        from email_service import EmailService
+        
+        with Session(self.engine) as session:
+            user = session.get(User, user_id)
+            if not user:
+                return False
+            
+            # Generate OTP
+            otp = EmailService.generate_otp()
+            
+            # Update user with OTP and expiry
+            user.verification_otp = otp
+            user.otp_expires_at = EmailService.get_otp_expiry()
+            session.add(user)
+            session.commit()
+            
+            # Send email
+            return EmailService.send_otp_email(user.email, otp, user.full_name)
+    
+    def verify_otp(self, user_id: str, otp: str) -> bool:
+        """Verify OTP code"""
+        from datetime import datetime
+        
+        with Session(self.engine) as session:
+            user = session.get(User, user_id)
+            if not user:
+                return False
+            
+            # Check if OTP matches
+            if user.verification_otp != otp:
+                return False
+            
+            # Check if OTP is expired
+            if user.otp_expires_at and user.otp_expires_at < datetime.now():
+                return False
+            
+            # Mark email as verified
+            user.email_verified = True
+            user.verification_otp = None
+            user.otp_expires_at = None
+            session.add(user)
+            session.commit()
+            
+            return True
