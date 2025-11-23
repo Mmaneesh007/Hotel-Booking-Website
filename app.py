@@ -164,84 +164,38 @@ with st.sidebar:
                         st.error(str(e))
         
         else:  # Register
-            # Check if waiting for OTP verification
-            if 'pending_user_id' in st.session_state:
-                # Show OTP verification form
-                st.subheader("📧 Verify Your Email")
-                st.info(f"We sent a 6-digit code to **{st.session_state.get('pending_email')}**")
+            # Show registration form
+            with st.form("register_form"):
+                st.subheader("📝 Register")
+                full_name = st.text_input("Full Name")
+                email = st.text_input("Email")
+                password = st.text_input("Password", type="password")
+                password_confirm = st.text_input("Confirm Password", type="password")
+                submit = st.form_submit_button("Create Account", use_container_width=True)
                 
-                otp_input = st.text_input("Enter OTP Code", max_chars=6, key="otp_input")
-                
-                col1, col2 = st.columns(2)
-                with col1:
-                    if st.button("Verify", use_container_width=True):
-                        if len(otp_input) == 6:
-                            if system.verify_otp(st.session_state.pending_user_id, otp_input):
-                                # OTP verified successfully
-                                user = system.get_user_by_id(st.session_state.pending_user_id)
-                                AuthManager.login({
-                                    'id': user.id,
-                                    'email': user.email,
-                                    'name': user.full_name
-                                })
-                                # Clear pending state
-                                del st.session_state.pending_user_id
-                                del st.session_state.pending_email
-                                st.success("✅ Email verified! Welcome!")
-                                st.rerun()
-                            else:
-                                st.error("❌ Invalid or expired OTP code")
+                if submit:
+                    if password != password_confirm:
+                        st.error("Passwords do not match")
+                    elif len(password) < 6:
+                        st.error("Password must be at least 6 characters")
+                    elif not email or not full_name:
+                        st.error("Please fill in all fields")
+                    else:
+                        user = system.create_user(email, password, full_name)
+                        if user:
+                            # Auto-verify the user (email verification disabled for now)
+                            system.auto_verify_user(user.id)
+                            
+                            # Log them in immediately
+                            AuthManager.login({
+                                'id': user.id,
+                                'email': user.email,
+                                'name': user.full_name
+                            })
+                            st.success("✅ Account created successfully! Welcome!")
+                            st.rerun()
                         else:
-                            st.error("Please enter a 6-digit code")
-                
-                with col2:
-                    if st.button("Resend OTP", use_container_width=True):
-                        if system.send_verification_otp(st.session_state.pending_user_id):
-                            st.success("📧 New OTP sent!")
-                        else:
-                            st.error("Failed to send OTP")
-                
-                if st.button("← Back to Registration", use_container_width=True):
-                    del st.session_state.pending_user_id
-                    del st.session_state.pending_email
-                    st.rerun()
-            
-            else:
-                # Show registration form
-                with st.form("register_form"):
-                    st.subheader("📝 Register")
-                    full_name = st.text_input("Full Name")
-                    email = st.text_input("Email")
-                    password = st.text_input("Password", type="password")
-                    password_confirm = st.text_input("Confirm Password", type="password")
-                    submit = st.form_submit_button("Create Account", use_container_width=True)
-                    
-                    if submit:
-                        if password != password_confirm:
-                            st.error("Passwords do not match")
-                        elif len(password) < 6:
-                            st.error("Password must be at least 6 characters")
-                        elif not email or not full_name:
-                            st.error("Please fill in all fields")
-                        else:
-                            user = system.create_user(email, password, full_name)
-                            if user:
-                                # Send OTP
-                                if system.send_verification_otp(user.id):
-                                    # Store user ID for OTP verification
-                                    st.session_state.pending_user_id = user.id
-                                    st.session_state.pending_email = email
-                                    
-                                    # Check if this was a resend (user already existed)
-                                    if user.email_verified == False and user.verification_otp:
-                                        st.info("📧 OTP resent! Check your email.")
-                                    else:
-                                        st.success("📧 Account created! Check your email for the OTP code.")
-                                    st.rerun()
-                                else:
-                                    st.error("Failed to send OTP. Please check email configuration or contact support.")
-                            else:
-                                st.error("Email already registered and verified. Please login instead.")
+                            st.error("Email already registered. Please login instead.")
         
         # Prevent access to main content if not logged in
         role = None

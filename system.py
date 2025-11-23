@@ -142,10 +142,7 @@ class HotelSystem:
             # Check if email already exists
             existing = session.exec(select(User).where(User.email == email)).first()
             if existing:
-                # If email exists but is not verified, allow resending OTP
-                if not existing.email_verified:
-                    return existing  # Return existing user to trigger OTP resend
-                return None  # Email already registered and verified
+                return None  # Email already registered
             
             # Create new user
             user_id = str(uuid.uuid4())
@@ -160,6 +157,17 @@ class HotelSystem:
             session.commit()
             session.refresh(user)
             return user
+    
+    def auto_verify_user(self, user_id: str) -> bool:
+        """Auto-verify user without email verification"""
+        with Session(self.engine) as session:
+            user = session.get(User, user_id)
+            if user:
+                user.email_verified = True
+                session.add(user)
+                session.commit()
+                return True
+            return False
     
     def verify_login(self, email: str, password: str) -> Optional[User]:
         """Verify user login credentials"""
