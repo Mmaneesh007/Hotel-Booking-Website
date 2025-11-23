@@ -254,12 +254,12 @@ if role == "Guest":
         show_confirmation_page(st.session_state.confirmed_reservation)
     else:
         # Hero Section
-    st.markdown("""
-    <div class="hero-container">
-        <div class="hero-title">Welcome to Luxury</div>
-        <div class="hero-subtitle">Experience comfort, elegance, and AI-powered hospitality.</div>
-    </div>
-    """, unsafe_allow_html=True)
+        st.markdown("""
+        <div class="hero-container">
+            <div class="hero-title">Welcome to Luxury</div>
+            <div class="hero-subtitle">Experience comfort, elegance, and AI-powered hospitality.</div>
+        </div>
+        """, unsafe_allow_html=True)
 
     col1, col2 = st.columns([1, 1.5], gap="large")
 

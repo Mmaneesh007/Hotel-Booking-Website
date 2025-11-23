@@ -1,0 +1,23 @@
+FIX FOR BOOKING ERROR:
+
+The error "Multiple classes found for path 'Guest'" happens because we're importing Guest inside the booking callback.
+
+SOLUTION:
+1. Add these imports at the top of app.py (line 1-6):
+   import streamlit as st
+   import uuid
+   from datetime import date, timedelta
+   from system import HotelSystem
+   from agent import HospitalityAIAgent
+   from models import RoomType, Guest
+   from sqlmodel import select
+
+2. Then in the booking button code (around line 289-292), REMOVE these lines:
+   from sqlmodel import Session, select
+   from models import Guest
+   import uuid
+
+3. Keep only:
+   from sqlmodel import Session
+
+This prevents duplicate Guest class registration.
