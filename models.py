@@ -37,7 +37,6 @@ class User(SQLModel, table=True):
     guests: List["Guest"] = Relationship(back_populates="user")
 
 class Guest(SQLModel, table=True):
-    __table_args__ = {"extend_existing": True}
     id: Optional[str] = Field(default=None, primary_key=True)
     user_id: Optional[str] = Field(default=None, foreign_key="user.id")
     name: str
