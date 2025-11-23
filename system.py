@@ -46,6 +46,24 @@ class HotelSystem:
 
     def find_guest_by_name(self, name: str) -> Optional[Guest]:
         with Session(self.engine) as session:
+            statement = select(Guest).where(Guest.name == name)
+            return session.exec(statement).first()
+
+    def create_guest(self, name: str, guest_type: GuestType = GuestType.WALK_IN) -> Guest:
+        with Session(self.engine) as session:
+            # Check if exists first to avoid dupes for demo
+            existing = self.find_guest_by_name(name)
+            if existing:
+                return existing
+                
+            g_id = str(uuid.uuid4())
+            guest = Guest(id=g_id, name=name, type=guest_type)
+            session.add(guest)
+            session.commit()
+            session.refresh(guest)
+            return guest
+
+    def check_availability(self, check_in: date, check_out: date, room_type: Optional[RoomType] = None) -> List[Room]:
         with Session(self.engine) as session:
             statement = select(Room).where(Room.status == RoomStatus.AVAILABLE)
             if room_type:
@@ -120,6 +138,31 @@ class HotelSystem:
     
     def create_user(self, email: str, password: str, full_name: str) -> Optional[User]:
         """Create a new user account"""
+        with Session(self.engine) as session:
+            # Check if email already exists
+            existing = session.exec(select(User).where(User.email == email)).first()
+            if existing:
+                return None  # Email already registered
+            
+            # Create new user
+            user_id = str(uuid.uuid4())
+            password_hash = AuthManager.hash_password(password)
+            user = User(
+                id=user_id,
+                email=email,
+                password_hash=password_hash,
+                full_name=full_name
+            )
+            session.add(user)
+            session.commit()
+            session.refresh(user)
+            return user
+    
+    def auto_verify_user(self, user_id: str) -> bool:
+        """Auto-verify user without email verification"""
+        with Session(self.engine) as session:
+            user = session.get(User, user_id)
+            if user:
                 user.email_verified = True
                 session.add(user)
                 session.commit()
