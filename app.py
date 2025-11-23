@@ -204,10 +204,56 @@ with st.sidebar:
         st.markdown("---")
         st.info("👆 Please login or register to continue")
 
+def show_confirmation_page(reservation_id):
+    st.markdown("---")
+    st.markdown("""
+    <div style="text-align: center; padding: 2rem; background-color: #F8F9FA; border-radius: 15px; border: 1px solid #E2E8F0;">
+        <h1 style="color: #C5A059; margin-bottom: 0.5rem;">Reservation Confirmed</h1>
+        <p style="color: #64748B; font-size: 1.1rem;">Thank you for choosing Hospitality AI</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    try:
+        from sqlmodel import Session
+        with Session(system.engine) as session:
+            # Re-fetch reservation with relationships loaded
+            from models import Reservation
+            res = session.get(Reservation, reservation_id)
+            if not res:
+                st.error("Reservation details not found.")
+                return
+
+            c1, c2 = st.columns(2)
+            with c1:
+                st.subheader("Guest Details")
+                st.write(f"**Name:** {res.guest.name}")
+                st.write(f"**Email:** {res.guest.email}")
+                st.write(f"**Reservation ID:** `{res.id}`")
+            
+            with c2:
+                st.subheader("Stay Details")
+                st.write(f"**Room:** {res.room.number} ({res.room.type.value})")
+                st.write(f"**Check-in:** {res.check_in}")
+                st.write(f"**Check-out:** {res.check_out}")
+                st.metric("Total Price", f"₹{res.total_price:,.2f}")
+
+            st.markdown("---")
+            if st.button("🏠 Return to Home", type="primary", use_container_width=True):
+                if 'confirmed_reservation' in st.session_state:
+                    del st.session_state.confirmed_reservation
+                st.rerun()
+                
+    except Exception as e:
+        st.error(f"Error loading confirmation: {e}")
+
 # --- MAIN CONTENT ---
 
 if role == "Guest":
-    # Hero Section
+    # Check if we should show confirmation page
+    if 'confirmed_reservation' in st.session_state:
+        show_confirmation_page(st.session_state.confirmed_reservation)
+    else:
+        # Hero Section
     st.markdown("""
     <div class="hero-container">
         <div class="hero-title">Welcome to Luxury</div>
@@ -316,12 +362,13 @@ if role == "Guest":
                                     st.session_state.booking_check_in, 
                                     st.session_state.booking_check_out
                                 )
-                                st.balloons()
-                                st.success(f"✅ Reservation Confirmed! ID: {res.id[:8]}...")
-                                st.info(f"**Room:** {room.number} | **Dates:** {st.session_state.booking_check_in} to {st.session_state.booking_check_out}")
+                                
+                                # Set confirmed reservation in session state
+                                st.session_state.confirmed_reservation = res.id
                                 
                                 # Clear available rooms after booking
-                                del st.session_state.available_rooms
+                                if 'available_rooms' in st.session_state:
+                                    del st.session_state.available_rooms
                                 st.rerun()
                             except Exception as e:
                                 st.error(f"Booking failed: {str(e)}")
