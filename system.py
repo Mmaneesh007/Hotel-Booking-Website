@@ -165,9 +165,10 @@ class HotelSystem:
             if not user:
                 return None
             
-            # Check if email is verified
-            if not user.email_verified:
-                raise ValueError("Please verify your email first. Check your inbox for the OTP code.")
+            # Temporarily disabled email verification check
+            # TODO: Re-enable after database migration
+            # if not user.email_verified:
+            #     raise ValueError("Please verify your email first. Check your inbox for the OTP code.")
             
             if AuthManager.verify_password(password, user.password_hash):
                 return user

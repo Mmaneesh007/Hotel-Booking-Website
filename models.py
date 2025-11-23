@@ -28,10 +28,10 @@ class User(SQLModel, table=True):
     full_name: str
     created_at: datetime = Field(default_factory=datetime.now)
     
-    # Email verification fields
-    email_verified: bool = False
-    verification_otp: Optional[str] = None
-    otp_expires_at: Optional[datetime] = None
+    # Email verification fields (optional for backward compatibility)
+    email_verified: Optional[bool] = Field(default=False)
+    verification_otp: Optional[str] = Field(default=None)
+    otp_expires_at: Optional[datetime] = Field(default=None)
     
     # Relationship to guests (one user can have multiple guest profiles)
     guests: List["Guest"] = Relationship(back_populates="user")
