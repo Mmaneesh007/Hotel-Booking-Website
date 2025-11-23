@@ -289,15 +289,16 @@ if role == "Guest":
                             # Create or get guest linked to this user
                             guest = system.find_guest_by_name(user_data['name'])
                             if not guest:
-                                guest = system.create_guest(user_data['name'])
+                                guest = system.create_guest(user_data['name'], user_data['email'])
                             
                             # Link guest to user if not already linked
                             if guest.user_id != user_data['id']:
                                 from sqlmodel import Session
                                 with Session(system.engine) as session:
                                     db_guest = session.get(Guest, guest.id)
-                                    db_guest.user_id = user_data['id']
-                                    session.commit()
+                                    if db_guest:
+                                        db_guest.user_id = user_data['id']
+                                        session.commit()
                             
                             res = system.create_reservation(
                                 guest.id, 

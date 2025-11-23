@@ -46,24 +46,6 @@ class HotelSystem:
 
     def find_guest_by_name(self, name: str) -> Optional[Guest]:
         with Session(self.engine) as session:
-            statement = select(Guest).where(Guest.name == name)
-            return session.exec(statement).first()
-
-    def create_guest(self, name: str, guest_type: GuestType = GuestType.WALK_IN) -> Guest:
-        with Session(self.engine) as session:
-            # Check if exists first to avoid dupes for demo
-            existing = self.find_guest_by_name(name)
-            if existing:
-                return existing
-                
-            g_id = str(uuid.uuid4())
-            guest = Guest(id=g_id, name=name, type=guest_type)
-            session.add(guest)
-            session.commit()
-            session.refresh(guest)
-            return guest
-
-    def check_availability(self, check_in: date, check_out: date, room_type: Optional[RoomType] = None) -> List[Room]:
         with Session(self.engine) as session:
             statement = select(Room).where(Room.status == RoomStatus.AVAILABLE)
             if room_type:
