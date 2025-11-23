@@ -1,13 +1,3 @@
-import streamlit as st
-from datetime import date, timedelta
-from system import HotelSystem
-from agent import HospitalityAI
-from models import RoomType, GuestType
-
-# --- CONFIGURATION & SETUP ---
-st.set_page_config(page_title="HOSPITALITY-AI", page_icon="🏨", layout="wide")
-
-# Initialize System
 @st.cache_resource(ttl=3600)  # Refresh cache every hour
 def get_system():
     db_url = st.secrets.get("DATABASE_URL")
@@ -288,9 +278,7 @@ if role == "Guest":
                                 user_data = AuthManager.get_current_user()
                                 
                                 # Create or get guest for this user
-                                from sqlmodel import Session, select
-                                from models import Guest
-                                import uuid
+                                from sqlmodel import Session
                                 
                                 with Session(system.engine) as session:
                                     # Check if guest exists for this user
