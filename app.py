@@ -277,9 +277,55 @@ if role == "Guest":
                         # Image Gallery
                         img_prefix = room.type.value.lower()
                         ic1, ic2, ic3 = st.columns(3)
-                            # Clear available rooms after booking
-                            del st.session_state.available_rooms
-                            st.rerun()
+                        ic1.image(f"images/{img_prefix}_bedroom.png", caption="Bedroom", use_column_width=True)
+                        ic2.image(f"images/{img_prefix}_washroom.png", caption="Washroom", use_column_width=True)
+                        ic3.image(f"images/{img_prefix}_amenities.png", caption="Amenities", use_column_width=True)
+                        
+                        # Booking button
+                        if st.button(f"📅 Book Room {room.number}", key=f"book_{room.id}", use_container_width=True, type="primary"):
+                            try:
+                                # Get current user
+                                user_data = AuthManager.get_current_user()
+                                
+                                # Create or get guest for this user
+                                from sqlmodel import Session, select
+                                from models import Guest
+                                import uuid
+                                
+                                with Session(system.engine) as session:
+                                    # Check if guest exists for this user
+                                    guest = session.exec(select(Guest).where(Guest.user_id == user_data['id'])).first()
+                                    
+                                    if not guest:
+                                        # Create new guest
+                                        g_id = str(uuid.uuid4())
+                                        guest = Guest(
+                                            id=g_id,
+                                            user_id=user_data['id'],
+                                            name=user_data['name'],
+                                            email=user_data['email']
+                                        )
+                                        session.add(guest)
+                                        session.commit()
+                                        session.refresh(guest)
+                                
+                                # Create reservation
+                                res = system.create_reservation(
+                                    guest.id, 
+                                    room.id, 
+                                    st.session_state.booking_check_in, 
+                                    st.session_state.booking_check_out
+                                )
+                                st.balloons()
+                                st.success(f"✅ Reservation Confirmed! ID: {res.id[:8]}...")
+                                st.info(f"**Room:** {room.number} | **Dates:** {st.session_state.booking_check_in} to {st.session_state.booking_check_out}")
+                                
+                                # Clear available rooms after booking
+                                del st.session_state.available_rooms
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"Booking failed: {str(e)}")
+                                st.write("Please try again or contact support.")
 
 elif role == "Staff":
     st.header("🛡️ Staff Operations")
