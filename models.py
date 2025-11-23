@@ -20,15 +20,28 @@ class GuestType(str, Enum):
     VIP = "VIP"
     LOYALTY = "Loyalty"
 
+class User(SQLModel, table=True):
+    __table_args__ = {"extend_existing": True}
+    id: Optional[str] = Field(default=None, primary_key=True)
+    email: str = Field(unique=True, index=True)
+    password_hash: str
+    full_name: str
+    created_at: datetime = Field(default_factory=datetime.now)
+    
+    # Relationship to guests (one user can have multiple guest profiles)
+    guests: List["Guest"] = Relationship(back_populates="user")
+
 class Guest(SQLModel, table=True):
     __table_args__ = {"extend_existing": True}
     id: Optional[str] = Field(default=None, primary_key=True)
+    user_id: Optional[str] = Field(default=None, foreign_key="user.id")
     name: str
     email: Optional[str] = None
     phone: Optional[str] = None
     type: GuestType = GuestType.WALK_IN
     loyalty_points: int = 0
     
+    user: Optional[User] = Relationship(back_populates="guests")
     reservations: List["Reservation"] = Relationship(back_populates="guest")
 
 class Room(SQLModel, table=True):

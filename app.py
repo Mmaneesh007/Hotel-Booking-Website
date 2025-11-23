@@ -119,13 +119,77 @@ with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/201/201623.png", width=80)
     st.title("HOSPITALITY-AI")
     st.markdown("---")
-    role = st.selectbox("Select Role", ["Guest", "Staff", "Manager"])
-    st.markdown("---")
-    if role == "Guest":
-        guest_name = st.text_input("Your Name", "John Doe")
-        if st.button("Login / Register"):
-            guest = system.create_guest(guest_name)
-            st.success(f"Welcome, {guest.name}!")
+    
+    # Check if user is logged in
+    from auth import AuthManager
+    
+    if AuthManager.is_logged_in():
+        # Show logged-in user info
+        user_data = AuthManager.get_current_user()
+        st.success(f"👤 {user_data['name']}")
+        st.caption(user_data['email'])
+        if st.button("Logout", use_container_width=True):
+            AuthManager.logout()
+            st.rerun()
+        st.markdown("---")
+        role = st.selectbox("Select Role", ["Guest", "Manager"])
+    else:
+        # Show login/registration forms
+        auth_tab = st.radio("", ["Login", "Register"], horizontal=True)
+        
+        if auth_tab == "Login":
+            with st.form("login_form"):
+                st.subheader("🔐 Login")
+                email = st.text_input("Email")
+                password = st.text_input("Password", type="password")
+                submit = st.form_submit_button("Login", use_container_width=True)
+                
+                if submit:
+                    user = system.verify_login(email, password)
+                    if user:
+                        AuthManager.login({
+                            'id': user.id,
+                            'email': user.email,
+                            'name': user.full_name
+                        })
+                        st.success("Login successful!")
+                        st.rerun()
+                    else:
+                        st.error("Invalid email or password")
+        
+        else:  # Register
+            with st.form("register_form"):
+                st.subheader("📝 Register")
+                full_name = st.text_input("Full Name")
+                email = st.text_input("Email")
+                password = st.text_input("Password", type="password")
+                password_confirm = st.text_input("Confirm Password", type="password")
+                submit = st.form_submit_button("Create Account", use_container_width=True)
+                
+                if submit:
+                    if password != password_confirm:
+                        st.error("Passwords do not match")
+                    elif len(password) < 6:
+                        st.error("Password must be at least 6 characters")
+                    elif not email or not full_name:
+                        st.error("Please fill in all fields")
+                    else:
+                        user = system.create_user(email, password, full_name)
+                        if user:
+                            AuthManager.login({
+                                'id': user.id,
+                                'email': user.email,
+                                'name': user.full_name
+                            })
+                            st.success("Account created! Welcome!")
+                            st.rerun()
+                        else:
+                            st.error("Email already registered")
+        
+        # Prevent access to main content if not logged in
+        role = None
+        st.markdown("---")
+        st.info("👆 Please login or register to continue")
 
 # --- MAIN CONTENT ---
 
@@ -189,10 +253,25 @@ if role == "Guest":
                             ic3.image(f"images/{img_prefix}_amenities.png", caption="Amenities")
                             
                             if st.button(f"Book Room {room.number}", key=room.id):
-                                guest = system.create_guest(guest_name)
+                                # Get current user
+                                user_data = AuthManager.get_current_user()
+                                
+                                # Create or get guest linked to this user
+                                guest = system.find_guest_by_name(user_data['name'])
+                                if not guest:
+                                    guest = system.create_guest(user_data['name'])
+                                
+                                # Link guest to user if not already linked
+                                if guest.user_id != user_data['id']:
+                                    from sqlmodel import Session
+                                    with Session(system.engine) as session:
+                                        db_guest = session.get(Guest, guest.id)
+                                        db_guest.user_id = user_data['id']
+                                        session.commit()
+                                
                                 res = system.create_reservation(guest.id, room.id, check_in, check_out)
                                 st.balloons()
-                                st.success(f"Reservation Confirmed! ID: {res.id}")
+                                st.success(f"✅ Reservation Confirmed! ID: {res.id[:8]}...")
                 else:
                     st.error("No rooms available for these dates.")
 

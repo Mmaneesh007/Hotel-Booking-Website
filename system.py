@@ -2,7 +2,8 @@ import uuid
 from datetime import date, datetime
 from typing import List, Optional
 from sqlmodel import Session, SQLModel, create_engine, select
-from models import Room, RoomType, RoomStatus, Guest, GuestType, Reservation, ReservationStatus
+from models import Room, RoomType, RoomStatus, Guest, GuestType, Reservation, ReservationStatus, User
+from auth import AuthManager
 
 class HotelSystem:
     def __init__(self, db_url: Optional[str] = None):
@@ -132,3 +133,58 @@ class HotelSystem:
             total = session.exec(select(Room)).all()
             occupied = [r for r in total if r.status == RoomStatus.OCCUPIED] # Simplified logic
             return len(occupied), len(total)
+    
+    # ==== USER MANAGEMENT METHODS ====
+    
+    def create_user(self, email: str, password: str, full_name: str) -> Optional[User]:
+        """Create a new user account"""
+        with Session(self.engine) as session:
+            # Check if email already exists
+            existing = session.exec(select(User).where(User.email == email)).first()
+            if existing:
+                return None  # Email already registered
+            
+            # Create new user
+            user_id = str(uuid.uuid4())
+            password_hash = AuthManager.hash_password(password)
+            user = User(
+                id=user_id,
+                email=email,
+                password_hash=password_hash,
+                full_name=full_name
+            )
+            session.add(user)
+            session.commit()
+            session.refresh(user)
+            return user
+    
+    def verify_login(self, email: str, password: str) -> Optional[User]:
+        """Verify user login credentials"""
+        with Session(self.engine) as session:
+            user = session.exec(select(User).where(User.email == email)).first()
+            if not user:
+                return None
+            
+            if AuthManager.verify_password(password, user.password_hash):
+                return user
+            return None
+    
+    def get_user_by_id(self, user_id: str) -> Optional[User]:
+        """Get user by ID"""
+        with Session(self.engine) as session:
+            return session.get(User, user_id)
+    
+    def get_user_reservations(self, user_id: str) -> List[Reservation]:
+        """Get all reservations for a specific user"""
+        with Session(self.engine) as session:
+            # Get all guests associated with this user
+            guests = session.exec(select(Guest).where(Guest.user_id == user_id)).all()
+            guest_ids = [g.id for g in guests]
+            
+            # Get all reservations for these guests
+            if guest_ids:
+                reservations = session.exec(
+                    select(Reservation).where(Reservation.guest_id.in_(guest_ids))
+                ).all()
+                return reservations
+            return []
