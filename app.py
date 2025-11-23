@@ -277,39 +277,6 @@ if role == "Guest":
                         # Image Gallery
                         img_prefix = room.type.value.lower()
                         ic1, ic2, ic3 = st.columns(3)
-                        ic1.image(f"images/{img_prefix}_bedroom.png", caption="Bedroom", use_column_width=True)
-                        ic2.image(f"images/{img_prefix}_washroom.png", caption="Washroom", use_column_width=True)
-                        ic3.image(f"images/{img_prefix}_amenities.png", caption="Amenities", use_column_width=True)
-                        
-                        # Booking button
-                        if st.button(f"📅 Book Room {room.number}", key=f"book_{room.id}", use_container_width=True, type="primary"):
-                            # Get current user
-                            user_data = AuthManager.get_current_user()
-                            
-                            # Create or get guest linked to this user
-                            guest = system.find_guest_by_name(user_data['name'])
-                            if not guest:
-                                guest = system.create_guest(user_data['name'], user_data['email'])
-                            
-                            # Link guest to user if not already linked
-                            if guest.user_id != user_data['id']:
-                                from sqlmodel import Session
-                                with Session(system.engine) as session:
-                                    db_guest = session.get(Guest, guest.id)
-                                    if db_guest:
-                                        db_guest.user_id = user_data['id']
-                                        session.commit()
-                            
-                            res = system.create_reservation(
-                                guest.id, 
-                                room.id, 
-                                st.session_state.booking_check_in, 
-                                st.session_state.booking_check_out
-                            )
-                            st.balloons()
-                            st.success(f"✅ Reservation Confirmed! ID: {res.id[:8]}...")
-                            st.info(f"**Room:** {room.number} | **Dates:** {st.session_state.booking_check_in} to {st.session_state.booking_check_out}")
-                            
                             # Clear available rooms after booking
                             del st.session_state.available_rooms
                             st.rerun()
