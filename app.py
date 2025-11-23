@@ -1,3 +1,15 @@
+import streamlit as st
+import uuid
+from datetime import date, timedelta
+from system import HotelSystem
+from agent import HospitalityAIAgent
+from models import RoomType, Guest
+from sqlmodel import select
+
+# --- CONFIGURATION & SETUP ---
+st.set_page_config(page_title="HOSPITALITY-AI", page_icon="🏨", layout="wide")
+
+# Initialize System
 @st.cache_resource(ttl=3600)  # Refresh cache every hour
 def get_system():
     db_url = st.secrets.get("DATABASE_URL")
