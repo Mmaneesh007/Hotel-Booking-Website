@@ -261,9 +261,9 @@ if role == "Guest":
         </div>
         """, unsafe_allow_html=True)
 
-    col1, col2 = st.columns([1, 1.5], gap="large")
+        col1, col2 = st.columns([1, 1.5], gap="large")
 
-    with col1:
+        with col1:
         st.subheader("💬 AI Concierge")
         st.caption("Ask about rooms, amenities, or local tips.")
         
@@ -288,7 +288,7 @@ if role == "Guest":
             # Add AI response to history
             st.session_state.messages.append({"role": "assistant", "content": response})
 
-    with col2:
+        with col2:
         st.subheader("📅 Book Your Stay")
         with st.container(border=True):
             c1, c2 = st.columns(2)
