@@ -120,31 +120,6 @@ class HotelSystem:
     
     def create_user(self, email: str, password: str, full_name: str) -> Optional[User]:
         """Create a new user account"""
-        with Session(self.engine) as session:
-            # Check if email already exists
-            existing = session.exec(select(User).where(User.email == email)).first()
-            if existing:
-                return None  # Email already registered
-            
-            # Create new user
-            user_id = str(uuid.uuid4())
-            password_hash = AuthManager.hash_password(password)
-            user = User(
-                id=user_id,
-                email=email,
-                password_hash=password_hash,
-                full_name=full_name
-            )
-            session.add(user)
-            session.commit()
-            session.refresh(user)
-            return user
-    
-    def auto_verify_user(self, user_id: str) -> bool:
-        """Auto-verify user without email verification"""
-        with Session(self.engine) as session:
-            user = session.get(User, user_id)
-            if user:
                 user.email_verified = True
                 session.add(user)
                 session.commit()
