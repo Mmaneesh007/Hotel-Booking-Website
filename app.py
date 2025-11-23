@@ -264,115 +264,115 @@ if role == "Guest":
         col1, col2 = st.columns([1, 1.5], gap="large")
 
         with col1:
-        st.subheader("💬 AI Concierge")
-        st.caption("Ask about rooms, amenities, or local tips.")
-        
-        # Display Chat History
-        for msg in st.session_state.messages:
-            with st.chat_message(msg["role"]):
-                st.write(msg["content"])
-
-        # Chat Input
-        if prompt := st.chat_input("How can I help you today?"):
-            # Add user message to history
-            st.session_state.messages.append({"role": "user", "content": prompt})
-            with st.chat_message("user"):
-                st.write(prompt)
-
-            # Get AI Response
-            with st.chat_message("assistant"):
-                with st.spinner("Thinking..."):
-                    response = ai.process_input(prompt, history=st.session_state.messages, user_name=guest_name)
-                    st.write(response)
+            st.subheader("💬 AI Concierge")
+            st.caption("Ask about rooms, amenities, or local tips.")
             
-            # Add AI response to history
-            st.session_state.messages.append({"role": "assistant", "content": response})
+            # Display Chat History
+            for msg in st.session_state.messages:
+                with st.chat_message(msg["role"]):
+                    st.write(msg["content"])
+
+            # Chat Input
+            if prompt := st.chat_input("How can I help you today?"):
+                # Add user message to history
+                st.session_state.messages.append({"role": "user", "content": prompt})
+                with st.chat_message("user"):
+                    st.write(prompt)
+
+                # Get AI Response
+                with st.chat_message("assistant"):
+                    with st.spinner("Thinking..."):
+                        response = ai.process_input(prompt, history=st.session_state.messages, user_name=guest_name)
+                        st.write(response)
+                
+                # Add AI response to history
+                st.session_state.messages.append({"role": "assistant", "content": response})
 
         with col2:
-        st.subheader("📅 Book Your Stay")
-        with st.container(border=True):
-            c1, c2 = st.columns(2)
-            check_in = c1.date_input("Check-in", date.today() + timedelta(days=1))
-            check_out = c2.date_input("Check-out", date.today() + timedelta(days=2))
-            room_type = st.selectbox("Room Type", [t.value for t in RoomType])
-            
-            if st.button("Check Availability", use_container_width=True):
-                # Convert the string value back to enum
-                selected_room_type = next(t for t in RoomType if t.value == room_type)
-                available = system.check_availability(check_in, check_out, selected_room_type)
-                if available:
-                    st.success(f"✨ Found {len(available)} {room_type} rooms!")
-                    
-                    # Store available rooms in session state for booking
-                    st.session_state.available_rooms = available
-                    st.session_state.booking_check_in = check_in
-                    st.session_state.booking_check_out = check_out
-                else:
-                    st.error("No rooms available for these dates.")
-            
-            # Show available rooms if they exist in session
-            if 'available_rooms' in st.session_state and st.session_state.available_rooms:
-                st.markdown("---")
-                st.markdown("### 🏨 Available Rooms")
+            st.subheader("📅 Book Your Stay")
+            with st.container(border=True):
+                c1, c2 = st.columns(2)
+                check_in = c1.date_input("Check-in", date.today() + timedelta(days=1))
+                check_out = c2.date_input("Check-out", date.today() + timedelta(days=2))
+                room_type = st.selectbox("Room Type", [t.value for t in RoomType])
                 
-                for room in st.session_state.available_rooms:
-                    with st.container(border=True):
-                        # Room header
-                        col_a, col_b = st.columns([3, 1])
-                        col_a.markdown(f"**🛏️ Room {room.number}**")
-                        col_b.markdown(f"**₹{room.price_per_night}/night**")
+                if st.button("Check Availability", use_container_width=True):
+                    # Convert the string value back to enum
+                    selected_room_type = next(t for t in RoomType if t.value == room_type)
+                    available = system.check_availability(check_in, check_out, selected_room_type)
+                    if available:
+                        st.success(f"✨ Found {len(available)} {room_type} rooms!")
                         
-                        # Image Gallery
-                        img_prefix = room.type.value.lower()
-                        ic1, ic2, ic3 = st.columns(3)
-                        ic1.image(f"images/{img_prefix}_bedroom.png", caption="Bedroom", use_column_width=True)
-                        ic2.image(f"images/{img_prefix}_washroom.png", caption="Washroom", use_column_width=True)
-                        ic3.image(f"images/{img_prefix}_amenities.png", caption="Amenities", use_column_width=True)
-                        
-                        # Booking button
-                        if st.button(f"📅 Book Room {room.number}", key=f"book_{room.id}", use_container_width=True, type="primary"):
-                            try:
-                                # Get current user
-                                user_data = AuthManager.get_current_user()
-                                
-                                # Create or get guest for this user
-                                from sqlmodel import Session
-                                
-                                with Session(system.engine) as session:
-                                    # Check if guest exists for this user
-                                    guest = session.exec(select(Guest).where(Guest.user_id == user_data['id'])).first()
+                        # Store available rooms in session state for booking
+                        st.session_state.available_rooms = available
+                        st.session_state.booking_check_in = check_in
+                        st.session_state.booking_check_out = check_out
+                    else:
+                        st.error("No rooms available for these dates.")
+                
+                # Show available rooms if they exist in session
+                if 'available_rooms' in st.session_state and st.session_state.available_rooms:
+                    st.markdown("---")
+                    st.markdown("### 🏨 Available Rooms")
+                    
+                    for room in st.session_state.available_rooms:
+                        with st.container(border=True):
+                            # Room header
+                            col_a, col_b = st.columns([3, 1])
+                            col_a.markdown(f"**🛏️ Room {room.number}**")
+                            col_b.markdown(f"**₹{room.price_per_night}/night**")
+                            
+                            # Image Gallery
+                            img_prefix = room.type.value.lower()
+                            ic1, ic2, ic3 = st.columns(3)
+                            ic1.image(f"images/{img_prefix}_bedroom.png", caption="Bedroom", use_column_width=True)
+                            ic2.image(f"images/{img_prefix}_washroom.png", caption="Washroom", use_column_width=True)
+                            ic3.image(f"images/{img_prefix}_amenities.png", caption="Amenities", use_column_width=True)
+                            
+                            # Booking button
+                            if st.button(f"📅 Book Room {room.number}", key=f"book_{room.id}", use_container_width=True, type="primary"):
+                                try:
+                                    # Get current user
+                                    user_data = AuthManager.get_current_user()
                                     
-                                    if not guest:
-                                        # Create new guest
-                                        g_id = str(uuid.uuid4())
-                                        guest = Guest(
-                                            id=g_id,
-                                            user_id=user_data['id'],
-                                            name=user_data['name'],
-                                            email=user_data['email']
-                                        )
-                                        session.add(guest)
-                                        session.commit()
-                                        session.refresh(guest)
-                                
-                                # Create reservation
-                                res = system.create_reservation(
-                                    guest.id, 
-                                    room.id, 
-                                    st.session_state.booking_check_in, 
-                                    st.session_state.booking_check_out
-                                )
-                                
-                                # Set confirmed reservation in session state
-                                st.session_state.confirmed_reservation = res.id
-                                
-                                # Clear available rooms after booking
-                                if 'available_rooms' in st.session_state:
-                                    del st.session_state.available_rooms
-                                st.rerun()
-                            except Exception as e:
-                                st.error(f"Booking failed: {str(e)}")
-                                st.write("Please try again or contact support.")
+                                    # Create or get guest for this user
+                                    from sqlmodel import Session
+                                    
+                                    with Session(system.engine) as session:
+                                        # Check if guest exists for this user
+                                        guest = session.exec(select(Guest).where(Guest.user_id == user_data['id'])).first()
+                                        
+                                        if not guest:
+                                            # Create new guest
+                                            g_id = str(uuid.uuid4())
+                                            guest = Guest(
+                                                id=g_id,
+                                                user_id=user_data['id'],
+                                                name=user_data['name'],
+                                                email=user_data['email']
+                                            )
+                                            session.add(guest)
+                                            session.commit()
+                                            session.refresh(guest)
+                                    
+                                    # Create reservation
+                                    res = system.create_reservation(
+                                        guest.id, 
+                                        room.id, 
+                                        st.session_state.booking_check_in, 
+                                        st.session_state.booking_check_out
+                                    )
+                                    
+                                    # Set confirmed reservation in session state
+                                    st.session_state.confirmed_reservation = res.id
+                                    
+                                    # Clear available rooms after booking
+                                    if 'available_rooms' in st.session_state:
+                                        del st.session_state.available_rooms
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"Booking failed: {str(e)}")
+                                    st.write("Please try again or contact support.")
 
 elif role == "Staff":
     st.header("🛡️ Staff Operations")
