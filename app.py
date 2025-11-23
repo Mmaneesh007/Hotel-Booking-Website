@@ -1,3 +1,32 @@
+import streamlit as st
+from datetime import date, timedelta
+from system import HotelSystem
+from agent import HospitalityAI
+from models import RoomType, GuestType
+
+# --- CONFIGURATION & SETUP ---
+st.set_page_config(page_title="HOSPITALITY-AI", page_icon="🏨", layout="wide")
+
+# Initialize System
+@st.cache_resource(ttl=3600)  # Refresh cache every hour
+def get_system():
+    db_url = st.secrets.get("DATABASE_URL")
+    try:
+        return HotelSystem(db_url=db_url)
+    except Exception as e:
+        st.error(f"🚨 Database Connection Error: {e}")
+        st.stop()
+
+system = get_system()
+
+# Initialize AI
+api_key = st.secrets.get("GEMINI_API_KEY")
+ai = HospitalityAI(system, api_key=api_key)
+
+# Initialize Session State for Chat
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
 # --- CUSTOM CSS (PREMIUM UI) ---
 st.markdown("""
 <style>
@@ -254,46 +283,36 @@ if role == "Guest":
                         
                         # Booking button
                         if st.button(f"📅 Book Room {room.number}", key=f"book_{room.id}", use_container_width=True, type="primary"):
-                            try:
-                                # Get current user
-                                user_data = AuthManager.get_current_user()
-                                
-                                # Try to find existing guest or create new one
+                            # Get current user
+                            user_data = AuthManager.get_current_user()
+                            
+                            # Create or get guest linked to this user
+                            guest = system.find_guest_by_name(user_data['name'])
+                            if not guest:
+                                guest = system.create_guest(user_data['name'], user_data['email'])
+                            
+                            # Link guest to user if not already linked
+                            if guest.user_id != user_data['id']:
                                 from sqlmodel import Session
                                 with Session(system.engine) as session:
-                                    # Check if guest exists for this user
-                                    guest = session.exec(select(Guest).where(Guest.user_id == user_data['id'])).first()
-                                    
-                                    if not guest:
-                                        # Create new guest with user info
-                                        g_id = str(uuid.uuid4())
-                                        guest = Guest(
-                                            id=g_id,
-                                            user_id=user_data['id'],
-                                            name=user_data['name'],
-                                            email=user_data['email']
-                                        )
-                                        session.add(guest)
+                                    db_guest = session.get(Guest, guest.id)
+                                    if db_guest:
+                                        db_guest.user_id = user_data['id']
                                         session.commit()
-                                        session.refresh(guest)
-                                
-                                # Create reservation
-                                res = system.create_reservation(
-                                    guest.id, 
-                                    room.id, 
-                                    st.session_state.booking_check_in, 
-                                    st.session_state.booking_check_out
-                                )
-                                st.balloons()
-                                st.success(f"✅ Reservation Confirmed! ID: {res.id[:8]}...")
-                                st.info(f"**Room:** {room.number} | **Dates:** {st.session_state.booking_check_in} to {st.session_state.booking_check_out}")
-                                
-                                # Clear available rooms after booking
-                                del st.session_state.available_rooms
-                                st.rerun()
-                            except Exception as e:
-                                st.error(f"Booking failed: {str(e)}")
-                                st.write("Please contact support or try again later.")
+                            
+                            res = system.create_reservation(
+                                guest.id, 
+                                room.id, 
+                                st.session_state.booking_check_in, 
+                                st.session_state.booking_check_out
+                            )
+                            st.balloons()
+                            st.success(f"✅ Reservation Confirmed! ID: {res.id[:8]}...")
+                            st.info(f"**Room:** {room.number} | **Dates:** {st.session_state.booking_check_in} to {st.session_state.booking_check_out}")
+                            
+                            # Clear available rooms after booking
+                            del st.session_state.available_rooms
+                            st.rerun()
 
 elif role == "Staff":
     st.header("🛡️ Staff Operations")
