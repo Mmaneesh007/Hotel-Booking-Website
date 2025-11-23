@@ -8,7 +8,7 @@ from models import RoomType, GuestType
 st.set_page_config(page_title="HOSPITALITY-AI", page_icon="🏨", layout="wide")
 
 # Initialize System
-@st.cache_resource
+@st.cache_resource(ttl=3600)  # Refresh cache every hour
 def get_system():
     db_url = st.secrets.get("DATABASE_URL")
     try:
